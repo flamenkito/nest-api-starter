@@ -58,13 +58,22 @@ export class LoginService {
 
   async tryLogout(user: UserModel, token: string) {
     await this.removeExpiredTokens(this.loggedOut);
-    // remove from logged users
-    const loggedIn = await this.loggedIn.findOne({ token });
-    if (!loggedIn) {
-      throw new Error('User is not logged in');
-    }
-    await this.loggedIn.remove(loggedIn);
     // add to logged out
-    await this.loggedOut.post({ token });
+    const loggedOut = await this.loggedOut.findOne({ token });
+    if (!loggedOut) {
+      await this.loggedOut.post({ token });
+    }
+    // remove from logged in
+    const loggedIn = await this.loggedIn.findOne({ token });
+    if (loggedIn) {
+      await this.loggedIn.remove(loggedIn);
+    } else {
+      // user is already logged out
+      if (loggedOut) {
+        throw new Error('User is already logged in');
+      } else {
+        // TODO: blacklist token
+      }
+    }
   }
 }
