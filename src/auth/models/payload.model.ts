@@ -2,7 +2,7 @@ import * as jwt from 'jsonwebtoken';
 
 import { environment } from 'shared/environment';
 
-import { UserModel } from 'db/user';
+import { UserEntity } from './user.entity';
 
 export interface PayloadModel {
   username: string;
@@ -10,7 +10,7 @@ export interface PayloadModel {
 }
 
 export namespace PayloadModel {
-  export function fromUserModel(user: UserModel): PayloadModel {
+  export function fromUserModel(user: UserEntity): PayloadModel {
     const { username, roles } = user;
     return {
       username,

@@ -1,15 +1,22 @@
 import { Injectable } from '@nestjs/common';
 
 import { Collection } from 'shared/collection';
-import { UserModel } from 'db/user';
 
-import { PayloadModel, HasTokenModel } from './models';
+import { PayloadModel, HasTokenModel, UserEntity } from './models';
+import { UserStateEntity } from './models';
 import { LoggedInModel, LoggedOutModel } from './models';
+
+import { CollectionService } from 'shared/collection';
 
 @Injectable()
 export class LoginService {
-  private loggedIn = LoggedInModel.getCollection();
-  private loggedOut = LoggedOutModel.getCollection();
+  private loggedIn: Collection<LoggedInModel>;
+  private loggedOut: Collection<LoggedOutModel>;
+
+  constructor(private readonly collection: CollectionService) {
+    this.loggedIn = collection.getRemote<LoggedInModel>(LoggedInModel);
+    this.loggedOut = collection.getRemote<LoggedOutModel>(LoggedOutModel);
+  }
 
   private isTokenExpired(token: string) {
     try {
@@ -38,26 +45,34 @@ export class LoginService {
     }
   }
 
-  private async checkLimit(user: UserModel) {
-    const tokens = await this.loggedIn.find({ userId: user.id });
+  private async checkLimit(user: UserEntity) {
+    const tokens = await this.loggedIn.find({ userId: user._id });
     if (tokens.length >= user.instances) {
       throw new Error('Too many user instances already has logged in');
     }
   }
 
-  async tryLogin(user: UserModel, token: string) {
+  async tryLogin(
+    user: UserEntity,
+    token: string,
+  ): Promise<Collection.RemoteDb> {
     await this.checkLoggedOut(token);
     await this.removeExpiredTokens(this.loggedIn);
     await this.checkLimit(user);
     // add to logged users
     this.loggedIn.post({
       token,
-      userId: user.id,
+      userId: user._id,
     });
+    // setup remote db
+    const remoteDb = this.collection.getRemote(UserStateEntity, {
+      name: user._id,
+      pass: user._id,
+    });
+    return remoteDb.getRemoteDb();
   }
 
-  async tryLogout(user: UserModel, token: string) {
-    await this.removeExpiredTokens(this.loggedOut);
+  async tryLogout(user: UserEntity, token: string) {
     // add to logged out
     const loggedOut = await this.loggedOut.findOne({ token });
     if (!loggedOut) {
@@ -70,10 +85,11 @@ export class LoginService {
     } else {
       // user is already logged out
       if (loggedOut) {
-        throw new Error('User is already logged in');
+        throw new Error('User is already logged out');
       } else {
         // TODO: blacklist token
       }
     }
+    await this.removeExpiredTokens(this.loggedOut);
   }
 }

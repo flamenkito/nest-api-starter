@@ -5,3 +5,5 @@ export * from './login-user.dto';
 export * from './logout-user.dto';
 export * from './payload.model';
 export * from './token.model';
+export * from './user.entity';
+export * from './user-state.entity';

@@ -1,17 +1,21 @@
-import { Collection } from 'shared/collection';
+import { Entity } from 'shared/collection';
 
 import { HasTokenModel } from './has-token.model';
 
-export interface LoggedOutModel extends HasTokenModel {}
+@Entity({
+  name: '_logged_out',
+  index: ['token'],
+  fromArgs: args => LoggedOutModel.fromArgs(args),
+})
+export class LoggedOutModel implements HasTokenModel {
+  _id: string;
+  _rev: string;
+  type: string;
+  // has token
+  token: string;
+}
 
 export namespace LoggedOutModel {
-  export const getCollection = () =>
-    new Collection<LoggedOutModel>(
-      '_logged_out',
-      ['token'],
-      LoggedOutModel.fromArgs,
-    );
-
   export function fromArgs(args): LoggedOutModel {
     return HasTokenModel.fromArgs(args);
   }

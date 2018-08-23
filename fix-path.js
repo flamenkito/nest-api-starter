@@ -78,6 +78,9 @@ const replacePaths = (rootDirNames) => (jsName) => __awaiter(this, void 0, void 
             const depth = jsName.split('/').map(() => '..');
             depth.pop();
             depth.pop();
+            if (depth.length === 0) {
+                depth.push('.');
+            }
             const to = from.replace(path, [...depth, path].join('/'));
             replace.push({ jsName, from, path, to });
         }

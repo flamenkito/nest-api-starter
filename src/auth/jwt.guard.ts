@@ -84,7 +84,7 @@ export class JwtGuard implements CanActivate {
       this.reflector.get<string[]>('roles', context.getHandler()) || [];
 
     console.log(
-      clc.red('JwtGuard'),
+      clc.yellow('JwtGuard'),
       request.method,
       request.url,
       endpointRoles,
